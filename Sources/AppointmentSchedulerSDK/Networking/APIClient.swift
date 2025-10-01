@@ -8,25 +8,19 @@
 import Foundation
 
 public actor APIClient {
-    public struct Config: Sendable {
-        public let baseURL: URL
-        // URLSession y JSONEncoder/Decoder son thread-safe para uso típico,
-        // pero para evitar que tengan que ser Sendable, los mantenemos internos del actor.
-        public init(baseURL: URL) { self.baseURL = baseURL }
-    }
-
     public enum APIError: Error { case invalidURL, badStatus(Int), decoding, encoding }
+
+    public static let shared = APIClient()
 
     private let baseURL: URL
     private let session: URLSession
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
-    public init(config: Config,
-                session: URLSession = .shared,
-                decoder: JSONDecoder = JSONDecoder(),
-                encoder: JSONEncoder = JSONEncoder()) {
-        self.baseURL = config.baseURL
+    private init(session: URLSession = .shared,
+                 decoder: JSONDecoder = JSONDecoder(),
+                 encoder: JSONEncoder = JSONEncoder()) {
+        self.baseURL = Endpoints.baseURL
         self.session = session
         self.decoder = decoder
         self.encoder = encoder
@@ -35,10 +29,12 @@ public actor APIClient {
     }
 
     // MARK: - Endpoints demo (JSONPlaceholder)
+    // Slots: GET /todos?_limit=...
+    // Reserva: POST /posts
 
     public func fetchSlots(limit: Int = 10) async throws -> [Slot] {
-        let url = baseURL.appendingPathComponent("/todos")
-        var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        var components = URLComponents(url: baseURL.appendingPathComponent("todos"),
+                                       resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "_limit", value: String(limit))]
         guard let finalURL = components?.url else { throw APIError.invalidURL }
 
@@ -50,7 +46,6 @@ public actor APIClient {
         struct Todo: Decodable { let id: Int; let title: String; let completed: Bool }
         let todos = try decoder.decode([Todo].self, from: data)
 
-        // Genera fechas sintéticas
         let now = Date()
         let calendar = Calendar.current
 
@@ -62,8 +57,7 @@ public actor APIClient {
     }
 
     public func createAppointment(_ request: AppointmentRequest) async throws -> AppointmentResponse {
-        let url = baseURL.appendingPathComponent("/posts")
-        var req = URLRequest(url: url)
+        var req = URLRequest(url: baseURL.appendingPathComponent("posts"))
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.httpBody = try encoder.encode(request)

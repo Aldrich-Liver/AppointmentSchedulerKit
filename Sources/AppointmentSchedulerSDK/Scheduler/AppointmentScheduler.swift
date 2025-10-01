@@ -15,6 +15,10 @@ public final class AppointmentScheduler: ObservableObject {
 
     private let api: APIClient
 
+    public convenience init() {
+        self.init(apiClient: .shared)
+    }
+
     public init(apiClient: APIClient) {
         self.api = apiClient
     }
@@ -23,8 +27,8 @@ public final class AppointmentScheduler: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            let result = try await api.fetchSlots(limit: limit) // cruza al actor APIClient
-            self.slots = result                                  // vuelve al MainActor
+            let result = try await api.fetchSlots(limit: limit)
+            self.slots = result
         } catch {
             self.slots = []
             print("[AppointmentScheduler] Error fetching slots: \(error)")
