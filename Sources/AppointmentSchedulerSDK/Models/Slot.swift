@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Slot: Identifiable, Codable, Equatable {
+public struct Slot: Identifiable, Codable, Equatable, Sendable {
     public let id: Int
     public let title: String
     public let startDate: Date

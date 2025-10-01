@@ -7,6 +7,7 @@
 
 import Foundation
 
+@MainActor
 public final class AppointmentScheduler: ObservableObject {
     @Published public private(set) var slots: [Slot] = []
     @Published public private(set) var isLoading: Bool = false
@@ -22,10 +23,10 @@ public final class AppointmentScheduler: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         do {
-            let result = try await api.fetchSlots(limit: limit)
-            await MainActor.run { self.slots = result }
+            let result = try await api.fetchSlots(limit: limit) // cruza al actor APIClient
+            self.slots = result                                  // vuelve al MainActor
         } catch {
-            await MainActor.run { self.slots = [] }
+            self.slots = []
             print("[AppointmentScheduler] Error fetching slots: \(error)")
         }
     }
@@ -35,7 +36,7 @@ public final class AppointmentScheduler: ObservableObject {
         do {
             let req = AppointmentRequest(slotId: slot.id, client: client, notes: notes)
             let resp = try await api.createAppointment(req)
-            await MainActor.run { self.lastResponse = resp }
+            self.lastResponse = resp
             return resp
         } catch {
             print("[AppointmentScheduler] Error creating appointment: \(error)")

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct AppointmentResponse: Codable, Equatable {
+public struct AppointmentResponse: Codable, Equatable, Sendable {
     public let id: Int
     public let slotId: Int
     public let confirmationCode: String

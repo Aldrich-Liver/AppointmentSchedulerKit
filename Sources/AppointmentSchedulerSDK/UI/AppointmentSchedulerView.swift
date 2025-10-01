@@ -23,11 +23,8 @@ public struct AppointmentSchedulerView: View {
             }
             ForEach(scheduler.slots) { slot in
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(slot.title)
-                        .font(.headline)
-                    Text(dateRange(slot))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    Text(slot.title).font(.headline)
+                    Text(dateRange(slot)).font(.subheadline).foregroundStyle(.secondary)
                     HStack {
                         if slot.available {
                             Button("Reservar") {
@@ -35,9 +32,7 @@ public struct AppointmentSchedulerView: View {
                             }
                             .buttonStyle(.borderedProminent)
                         } else {
-                            Text("No disponible")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
+                            Text("No disponible").font(.footnote).foregroundStyle(.secondary)
                         }
                         Spacer()
                     }

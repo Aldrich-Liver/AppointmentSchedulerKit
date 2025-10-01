@@ -7,77 +7,74 @@
 
 import Foundation
 
-public final class APIClient {
-    public struct Config {
-        public var baseURL: URL
-        public var urlSession: URLSession
-        public var jsonDecoder: JSONDecoder
-        public var jsonEncoder: JSONEncoder
-
-        public init(baseURL: URL,
-                    urlSession: URLSession = .shared,
-                    jsonDecoder: JSONDecoder = JSONDecoder(),
-                    jsonEncoder: JSONEncoder = JSONEncoder()) {
-            self.baseURL = baseURL
-            self.urlSession = urlSession
-            self.jsonDecoder = jsonDecoder
-            self.jsonEncoder = jsonEncoder
-        }
+public actor APIClient {
+    public struct Config: Sendable {
+        public let baseURL: URL
+        // URLSession y JSONEncoder/Decoder son thread-safe para uso típico,
+        // pero para evitar que tengan que ser Sendable, los mantenemos internos del actor.
+        public init(baseURL: URL) { self.baseURL = baseURL }
     }
 
     public enum APIError: Error { case invalidURL, badStatus(Int), decoding, encoding }
 
-    public var config: Config
+    private let baseURL: URL
+    private let session: URLSession
+    private let decoder: JSONDecoder
+    private let encoder: JSONEncoder
 
-    public init(config: Config) {
-        self.config = config
-        self.config.jsonDecoder.dateDecodingStrategy = .iso8601
-        self.config.jsonEncoder.dateEncodingStrategy = .iso8601
+    public init(config: Config,
+                session: URLSession = .shared,
+                decoder: JSONDecoder = JSONDecoder(),
+                encoder: JSONEncoder = JSONEncoder()) {
+        self.baseURL = config.baseURL
+        self.session = session
+        self.decoder = decoder
+        self.encoder = encoder
+        self.decoder.dateDecodingStrategy = .iso8601
+        self.encoder.dateEncodingStrategy = .iso8601
     }
 
     // MARK: - Endpoints demo (JSONPlaceholder)
-    // Slots: GET /todos (limit) => se mapean a slots con fechas sintéticas.
-    // Crear cita: POST /posts retorna id simulado.
 
     public func fetchSlots(limit: Int = 10) async throws -> [Slot] {
-        let url = config.baseURL.appending(path: "/todos")
+        let url = baseURL.appending(path: "/todos")
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "_limit", value: String(limit))]
         guard let finalURL = components?.url else { throw APIError.invalidURL }
 
-        let (data, response) = try await config.urlSession.data(from: finalURL)
+        let (data, response) = try await session.data(from: finalURL)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus((response as? HTTPURLResponse)?.statusCode ?? -1)
         }
 
         struct Todo: Decodable { let id: Int; let title: String; let completed: Bool }
-        let todos = try config.jsonDecoder.decode([Todo].self, from: data)
+        let todos = try decoder.decode([Todo].self, from: data)
 
+        // Genera fechas sintéticas
         let now = Date()
         let calendar = Calendar.current
 
-        let slots: [Slot] = todos.enumerated().map { idx, t in
+        return todos.enumerated().map { idx, t in
             let start = calendar.date(byAdding: .minute, value: idx * 30, to: now) ?? now
             let end = calendar.date(byAdding: .minute, value: 30, to: start) ?? start.addingTimeInterval(1800)
             return Slot(id: t.id, title: t.title.capitalized, startDate: start, endDate: end, available: !t.completed)
         }
-        return slots
     }
 
     public func createAppointment(_ request: AppointmentRequest) async throws -> AppointmentResponse {
-        let url = config.baseURL.appending(path: "/posts")
+        let url = baseURL.appending(path: "/posts")
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try config.jsonEncoder.encode(request)
+        req.httpBody = try encoder.encode(request)
 
-        let (data, response) = try await config.urlSession.data(for: req)
+        let (data, response) = try await session.data(for: req)
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
             throw APIError.badStatus((response as? HTTPURLResponse)?.statusCode ?? -1)
         }
 
         struct PostResp: Decodable { let id: Int }
-        let post = try config.jsonDecoder.decode(PostResp.self, from: data)
+        let post = try decoder.decode(PostResp.self, from: data)
 
         return AppointmentResponse(
             id: post.id,

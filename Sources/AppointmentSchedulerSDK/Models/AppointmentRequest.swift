@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct AppointmentRequest: Codable {
+public struct AppointmentRequest: Codable, Sendable {
     public let slotId: Int
     public let client: ClientInfo
     public let notes: String?

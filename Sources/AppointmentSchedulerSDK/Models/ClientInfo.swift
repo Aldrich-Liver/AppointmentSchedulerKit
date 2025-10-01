@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ClientInfo: Codable, Equatable {
+public struct ClientInfo: Codable, Equatable, Sendable {
     public var name: String
     public var email: String
 
