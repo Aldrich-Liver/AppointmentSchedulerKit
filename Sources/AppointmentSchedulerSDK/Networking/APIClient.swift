@@ -62,7 +62,7 @@ public actor APIClient {
     }
 
     public func createAppointment(_ request: AppointmentRequest) async throws -> AppointmentResponse {
-        let url = baseURL. appendingPathComponent(path: "/posts")
+        let url = baseURL.appendingPathComponent(path: "/posts")
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
