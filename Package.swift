@@ -1,23 +1,22 @@
-// swift-tools-version: 5.10
+// AppointmentSchedulerSDK/Package.swift
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
-  name: "AppointmentSchedulerKit",
-  platforms: [
-    .iOS(.v15)
-  ],
-  products: [
-    .library(name: "AppointmentSchedulerKit", targets: ["AppointmentSchedulerKit"])
-  ],
-  targets: [
-    .target(
-      name: "AppointmentSchedulerKit",
-      dependencies: [],
-      path: "Sources/AppointmentSchedulerKit",
-      resources: [
-        // Si usara Localizable.strings / imágenes:
-        // .process("Resources")
-      ]
-    )
-  ]
+    name: "AppointmentSchedulerSDK",
+    platforms: [
+        .iOS(.v15)
+    ],
+    products: [
+        .library(
+            name: "AppointmentSchedulerSDK",
+            targets: ["AppointmentSchedulerSDK"]
+        )
+    ],
+    targets: [
+        .target(
+            name: "AppointmentSchedulerSDK",
+            path: "Sources/AppointmentSchedulerSDK"
+        )
+    ]
 )
