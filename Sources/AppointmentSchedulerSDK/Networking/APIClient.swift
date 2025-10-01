@@ -37,7 +37,7 @@ public actor APIClient {
     // MARK: - Endpoints demo (JSONPlaceholder)
 
     public func fetchSlots(limit: Int = 10) async throws -> [Slot] {
-        let url = baseURL.appendingPathComponent(path: "/todos")
+        let url = baseURL.appendingPathComponent("/todos")
         var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         components?.queryItems = [URLQueryItem(name: "_limit", value: String(limit))]
         guard let finalURL = components?.url else { throw APIError.invalidURL }
@@ -62,7 +62,7 @@ public actor APIClient {
     }
 
     public func createAppointment(_ request: AppointmentRequest) async throws -> AppointmentResponse {
-        let url = baseURL.appendingPathComponent(path: "/posts")
+        let url = baseURL.appendingPathComponent("/posts")
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
